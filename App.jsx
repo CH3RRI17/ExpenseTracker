@@ -1,67 +1,82 @@
 import React, { useState } from 'react';
 
-const currencyOptions = ['AED', 'INR'];
-const typeOptions = ['Expense', 'Income', 'EMI', 'Transfer'];
-const accountOptions = ['ADCB Credit Card', 'HDFC Bank', 'Cash', 'ICICI Loan'];
-const categoryOptions = ['Grocery', 'Bills', 'Dining', 'Fuel', 'Transfer', 'EMI'];
+const initialForm = {
+  date: new Date().toISOString().slice(0, 10),
+  amount: '',
+  currency: 'AED',
+  type: 'Expense',
+  account: '',
+  category: '',
+  description: '',
+  loanTag: ''
+};
+
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx0oYca9Sp_ECczIxPK0UG7kl-5hSLYBToGmB_GhocWhQNRxOGK1M83wJUeu9LmGQ5GcA/exec';
 
 export default function App() {
-  const [form, setForm] = useState({
-    date: new Date().toISOString().slice(0, 10),
-    amount: '',
-    currency: 'AED',
-    type: 'Expense',
-    account: '',
-    category: '',
-    description: '',
-    loanTag: ''
-  });
+  const [form, setForm] = useState(initialForm);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Transaction submitted:', form);
-    // TODO: Send to Excel backend
+    setLoading(true);
+    setSuccess(null);
+    try {
+      const res = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(form),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setSuccess(true);
+        setForm(initialForm);
+      } else {
+        setSuccess(false);
+      }
+    } catch (err) {
+      console.error(err);
+      setSuccess(false);
+    }
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <h1 className="text-2xl font-bold mb-4">Expense Entry</h1>
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-4 rounded-2xl shadow-md space-y-4"
-      >
-        <input type="date" name="date" value={form.date} onChange={handleChange} className="input" />
-        <input type="number" name="amount" placeholder="Amount" value={form.amount} onChange={handleChange} className="input" />
-        
-        <select name="currency" value={form.currency} onChange={handleChange} className="input">
-          {currencyOptions.map(opt => <option key={opt}>{opt}</option>)}
-        </select>
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-md mx-auto bg-white rounded-2xl shadow-md p-6">
+        <h1 className="text-2xl font-bold mb-4">💸 Add Transaction</h1>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <input className="input" type="date" name="date" value={form.date} onChange={handleChange} />
+          <input className="input" type="number" name="amount" placeholder="Amount" value={form.amount} onChange={handleChange} />
+          <select className="input" name="currency" value={form.currency} onChange={handleChange}>
+            <option>AED</option>
+            <option>INR</option>
+          </select>
+          <select className="input" name="type" value={form.type} onChange={handleChange}>
+            <option>Expense</option>
+            <option>Income</option>
+            <option>EMI</option>
+            <option>Transfer</option>
+          </select>
+          <input className="input" name="account" placeholder="Account/Card" value={form.account} onChange={handleChange} />
+          <input className="input" name="category" placeholder="Category" value={form.category} onChange={handleChange} />
+          <input className="input" name="description" placeholder="Description" value={form.description} onChange={handleChange} />
+          <input className="input" name="loanTag" placeholder="Loan Tag (optional)" value={form.loanTag} onChange={handleChange} />
 
-        <select name="type" value={form.type} onChange={handleChange} className="input">
-          {typeOptions.map(opt => <option key={opt}>{opt}</option>)}
-        </select>
+          <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-xl" disabled={loading}>
+            {loading ? 'Saving...' : 'Save Transaction'}
+          </button>
 
-        <select name="account" value={form.account} onChange={handleChange} className="input">
-          <option value="">Select Account</option>
-          {accountOptions.map(opt => <option key={opt}>{opt}</option>)}
-        </select>
-
-        <select name="category" value={form.category} onChange={handleChange} className="input">
-          <option value="">Select Category</option>
-          {categoryOptions.map(opt => <option key={opt}>{opt}</option>)}
-        </select>
-
-        <input type="text" name="description" placeholder="Description" value={form.description} onChange={handleChange} className="input" />
-
-        <input type="text" name="loanTag" placeholder="Loan Tag (optional)" value={form.loanTag} onChange={handleChange} className="input" />
-
-        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-xl">Save</button>
-      </form>
+          {success === true && <p className="text-green-600 text-center">✅ Saved!</p>}
+          {success === false && <p className="text-red-600 text-center">❌ Failed. Try again.</p>}
+        </form>
+      </div>
     </div>
   );
 }
