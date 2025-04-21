@@ -1,0 +1,32 @@
+body {
+  font-family: sans-serif;
+  background: #f0f4f8;
+  margin: 0;
+  padding: 20px;
+}
+.container {
+  max-width: 400px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.05);
+}
+input, select, button {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+button {
+  background: #007bff;
+  color: white;
+  border: none;
+}
+#status {
+  text-align: center;
+  margin-top: 10px;
+}
